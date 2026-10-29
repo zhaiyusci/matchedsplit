@@ -1,0 +1,379 @@
+% Copyright (C) 2026 Yu Zhai <me@zhaiyusci.net>
+% This work may be distributed and/or modified under the LaTeX Project
+% Public License, version 1.3c or (at your option) any later version.
+% https://www.latex-project.org/lppl.txt
+% LPPL maintenance status: maintained.
+% Current Maintainer: Yu Zhai <me@zhaiyusci.net>.
+% The distributed Work is listed in MANIFEST.md.
+%
+\documentclass[a4paper,11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=27mm,headheight=14pt]{geometry}
+\usepackage{booktabs,array,xcolor,listings,fancyhdr}
+\usepackage{matchedsplit}
+\usepackage{amssymb}
+\usepackage[colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!45!black]{hyperref}
+\hypersetup{pdftitle={The matchedsplit package},pdfauthor={Yu Zhai},pdfsubject={Matched delimiters across manually broken equations}}
+\lstset{language=[LaTeX]TeX,basicstyle=\ttfamily\small,
+ columns=fullflexible,keepspaces=true,breaklines=true,
+ frame=single,rulecolor=\color{black!20},framesep=6pt,
+ aboveskip=10pt,belowskip=10pt,showstringspaces=false}
+\newcommand\pkg[1]{\textsf{#1}}
+\newcommand\env[1]{\texttt{#1}}
+\newcommand\cs[1]{\texttt{\textbackslash#1}}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\pkg{matchedsplit}}
+\fancyhead[R]{\small User manual, v0.8.0}
+\fancyfoot[C]{\thepage}
+\setlength\parindent{0pt}
+\setlength\parskip{5pt plus 1pt}
+\setcounter{tocdepth}{1}
+\title{The \pkg{matchedsplit} package\\[5pt]
+\large Matched delimiters across manually broken equations}
+\author{Yu Zhai\\\small\href{mailto:me@zhaiyusci.net}{\texttt{me@zhaiyusci.net}}}
+\date{Version 0.8.0\quad---\quad 29 October 2026}
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+\begin{abstract}
+\noindent
+The \pkg{matchedsplit} package permits a \cs{left}, \cs{middle},
+\cs{right} construction to cross manually chosen alignment rows.
+Each delimiter pair is sized independently from its contents, including
+nested pairs. The package provides an unnumbered inner alignment and
+numbered or unnumbered display alignments. Optional package settings
+replace the \env{split} and \env{align} environments of \pkg{amsmath}.
+\end{abstract}
+\tableofcontents
+\vfill
+\textcopyright\ 2026 Yu Zhai. Distributed under the LaTeX Project Public License,
+version 1.3c or later. Maintenance status: maintained. Current maintainer:
+Yu Zhai, \href{mailto:me@zhaiyusci.net}{\texttt{me@zhaiyusci.net}}.
+
+\newpage
+\section{Getting started}
+\subsection{Requirements and installation}
+The package requires \LaTeXe{} with the modern document-command,
+environment-copy and hook interfaces, and loads \pkg{amsmath}, \pkg{xcolor} and \pkg{l3keys2e} automatically.
+Testing used the pdf\LaTeX{}, Xe\LaTeX{} and Lua\LaTeX{} engines supplied
+with TeX Live 2026. Earlier formats have not been verified.
+
+For a local installation, place \texttt{matchedsplit.sty} beside the main
+source file. For a personal TEXMF installation, place it in
+\path{tex/latex/matchedsplit/} below your local TEXMF tree and refresh
+the filename database if your installation requires it.
+\begin{lstlisting}
+\usepackage{matchedsplit}
+\end{lstlisting}
+No package option is needed to use the new environments. Loading the
+package without options leaves the native \env{split}, \env{align} and
+\env{align*} definitions unchanged.
+
+\subsection{A complete example}
+\begin{lstlisting}
+\documentclass{article}
+\usepackage{matchedsplit}
+\begin{document}
+\begin{matchedalign}
+F &= \left( a+\frac{x}{y} \label{eq:first}\\
+  &\quad +\frac{p}{q}\right)\label{eq:second}
+\end{matchedalign}
+See \eqref{eq:second}.
+\end{document}
+\end{lstlisting}
+The two rows receive separate numbers, while the parentheses retain the
+same size:
+\begin{matchedalign}
+F &= \left( a+\frac{x}{y} \label{manual:first}\\
+  &\quad +\frac{p}{q}\right)\label{manual:second}
+\end{matchedalign}
+Compile twice to resolve references, such as \eqref{manual:second}.
+The package does not choose line breaks: the author supplies \verb|\\|
+and alignment markers \verb|&|.
+
+\newpage
+\section{Environments and package options}
+\subsection{Environment reference}
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Environment & Numbering and placement\\
+\midrule
+\env{matchedsplit} & Inner math alignment; numbering belongs to its parent.\\
+\env{matchedalign} & Display alignment; one number per row by default.\\
+\env{matchedalign*} & Display alignment; no automatic numbers.\\
+\bottomrule
+\end{tabular}
+\end{center}
+Use \env{matchedsplit} inside \env{equation}, \env{equation*},
+\verb|\[...\]|, or an appropriate outer math alignment. Use
+\env{matchedalign} directly in document text, not inside \env{equation}
+or \verb|\[...\]|. The special \pkg{amsmath} arrangement of an
+\env{align} inside \env{gather} has also been tested with the replacement.
+
+\subsection{One number for the complete formula}
+\begin{lstlisting}
+\begin{equation}\label{eq:whole}
+\begin{matchedsplit}
+G &= \left(\frac{a}{b}\\
+  &\quad +c\right)
+\end{matchedsplit}
+\end{equation}
+\end{lstlisting}
+\begin{equation}\label{manual:whole}
+\begin{matchedsplit}
+G &= \left(\frac{a}{b}\\ &\quad +c\right)
+\end{matchedsplit}
+\end{equation}
+
+\subsection{Replacing the native environments}
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Option & Default & Effect\\
+\midrule
+\texttt{overridesplit} & Off & Replace \env{split}.\\
+\texttt{overridealign} & Off & Replace \env{align} and \env{align*}.\\
+\texttt{rainbow} & Off & Color delimiters by nesting depth.\\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{lstlisting}
+\usepackage[overridesplit,overridealign]{matchedsplit}
+\end{lstlisting}
+The options are independent. The replacement \env{split} uses an
+\env{aligned} layout; it does not reproduce every width calculation of
+native \env{split}. The replacement \env{align} delegates numbering and
+layout to the saved native \pkg{amsmath} implementation.
+
+Configure \pkg{amsmath} before loading this package, for example:
+\begin{lstlisting}
+\usepackage[tbtags,leqno]{amsmath}
+\usepackage[overridesplit]{matchedsplit}
+\end{lstlisting}
+With \texttt{tbtags}, replacement \env{split} aligns a right-hand tag with
+the last row, or a left-hand tag with the first row. Otherwise it centers
+the block vertically for tagging.
+
+\newpage
+\section{Delimiter sizing and nested structures}
+A pair is sized from its mathematical contents after removing the
+outer alignment markers, row breaks and supported numbering commands.
+The size is \emph{not} the total height of the multirow display. A tall
+fraction affects every pair that contains it, but not an unrelated pair.
+
+\subsection{Nested pairs}
+\begin{lstlisting}
+\begin{matchedalign}
+F &= \left( a+\left[\frac{x}{y}+b \\
+  &\quad +c\right]+d \\
+  &\quad +\frac{p}{q}\right)
+\end{matchedalign}
+\end{lstlisting}
+\begin{matchedalign}
+F &= \left( a+\left[\frac{x}{y}+b \\
+  &\quad +c\right]+d \\
+  &\quad +\frac{p}{q}\right)
+\end{matchedalign}
+The square brackets form the inner pair and are measured separately
+from the surrounding parentheses.
+
+\subsection{Middle and invisible delimiters}
+\cs{middle} belongs to the innermost currently open pair. A period is
+accepted as an invisible delimiter, as in ordinary \TeX{}.
+\begin{lstlisting}
+\begin{matchedalign*}
+S &= \left\{ x\in\mathbb{R} \middle| \frac{x}{2}>0 \\
+  &\quad \middle| x<10\right\}
+\end{matchedalign*}
+\end{lstlisting}
+\begin{matchedalign*}
+S &= \left\{ x\in\mathbb{R} \middle| \frac{x}{2}>0 \\
+  &\quad \middle| x<10\right\}
+\end{matchedalign*}
+Use standard single-token delimiter characters or commands, for example
+\verb|(|, \verb|\{|, \verb|\langle| and \verb|.|.
+
+\subsection{Groups and inner environments}
+Braced groups retain their braces and are not recursively rewritten.
+Inner environments, including matrices, retain their own alignment
+markers and row breaks. A delimiter pair must not cross a group or
+inner-environment boundary. Native math inside such a structure must
+already be valid on its own; the outer scanner does not repair it.
+
+\newpage
+\section{Row control, tags and references}
+Supported row endings are \verb|\\|, \verb|\\*|,
+\verb|\\[3pt]| and \verb|\\*[3pt]|. Their spacing arguments are
+retained for layout and excluded from delimiter measurements.
+
+In \env{matchedalign}, use \cs{label} and \cs{eqref} as usual.
+\cs{notag} or \cs{nonumber} suppresses a row number.
+\verb|\tag{A}| supplies a custom tag; \verb|\tag*{B}| omits its
+usual surrounding parentheses. The counter behavior is that of
+\pkg{amsmath}, including the effect of custom tags on automatic numbering.
+\begin{lstlisting}
+\begin{matchedalign}
+H &= \left(\frac{a}{b}\tag{A}\label{eq:custom}\\
+  &\quad +x\notag\\
+  &\quad +y\right)\label{eq:last}
+\end{matchedalign}
+\end{lstlisting}
+\begin{matchedalign}
+H &= \left(\frac{a}{b}\tag{A}\label{manual:custom}\\
+  &\quad +x\notag\\
+  &\quad +y\right)\label{manual:last}
+\end{matchedalign}
+The custom tag can be referenced as \eqref{manual:custom}.
+Labels and tags must be at the top level of the relevant row and use
+braced arguments. Commands hidden in braced groups are not extracted
+from measurement content.
+
+\subsection{Text between rows}
+\cs{intertext} is supported in the display alignments, including while
+a delimiter pair remains open:
+\begin{lstlisting}
+\begin{matchedalign}
+f &= \left\langle\frac{a}{b}\\
+\intertext{The same delimiter pair continues.}
+  &\quad +c\right\rangle
+\end{matchedalign}
+\end{lstlisting}
+\begin{matchedalign}
+f &= \left\langle\frac{a}{b}\\
+\intertext{The same delimiter pair continues.}
+  &\quad +c\right\rangle
+\end{matchedalign}
+The text is not measured as part of the mathematics.
+\verb|\displaybreak[0]| and other native break levels are retained for
+\pkg{amsmath}. They do not make a boxed \env{matchedsplit} breakable.
+Comprehensive multipage pagination tests have not been performed.
+
+\newpage
+\section{Rainbow delimiters}
+The optional rainbow mode colors delimiters by nesting depth. Matching
+left and right delimiters, and any middle delimiters belonging to that
+pair, use the same color across rows. Ordinary formula contents and
+numbers retain their surrounding color. This feature is inspired by
+rainbow-parenthesis highlighting in editors such as Vim's niji.
+
+\subsection{Package defaults and local overrides}
+\begin{lstlisting}
+\usepackage[rainbow]{matchedsplit}
+% Enable globally, but disable for this display:
+\begin{matchedalign}[rainbow=false]
+f &= \left(a\\ &+b\right)
+\end{matchedalign}
+\end{lstlisting}
+Without a package default, opt in for a single environment:
+\begin{lstlisting}
+\begin{matchedalign*}[rainbow]
+f &= \left\{\frac{a}{b}+\left[x+\left(y\middle|z\\
+  &\quad +1\right)\right]\right\}
+\end{matchedalign*}
+\end{lstlisting}
+\begin{matchedalign*}[rainbow]
+f &= \left\{\frac{a}{b}+\left[x+\left(y\middle|z\\
+  &\quad +1\right)\right]\right\}
+\end{matchedalign*}
+The optional argument is available on \env{matchedsplit},
+\env{matchedalign} and \env{matchedalign*}. With the corresponding
+replacement options enabled it is also available on \env{split},
+\env{align} and \env{align*}. Environment settings override package
+defaults for that environment only; they do not change later displays.
+An omitted value in \texttt{rainbow} means \texttt{rainbow=true}.
+
+\subsection{Choosing a palette}
+\begin{lstlisting}
+\usepackage[rainbow,colors={blue,orange,teal}]{matchedsplit}
+% A different palette for one display:
+\begin{matchedalign}[rainbow,colors={red!70!black,blue}]
+f &= \left(a+\left[b\\ &+c\right]\right)
+\end{matchedalign}
+\end{lstlisting}
+The \texttt{colors} key accepts a nonempty, braced comma-separated list
+of \pkg{xcolor} names or expressions. It does not enable rainbow mode
+by itself. Undefined colors are diagnosed by \pkg{xcolor}. Configure
+\pkg{xcolor} before loading this package if additional color-name sets
+are required.
+
+The default palette is blue, orange, green, purple, red and cyan, using
+the package's \texttt{msblue}, \texttt{msorange}, \texttt{msgreen},
+\texttt{mspurple}, \texttt{msred} and \texttt{mscyan} definitions.
+Colors cycle when nesting exceeds the palette length. Sibling pairs at
+the same depth reuse the same color, and every environment starts at
+depth one. Invisible delimiters still participate in depth counting.
+Only directly parsed delimiters are colored: groups, native inner
+environments and delimiters hidden in macros remain outside the scanner.
+
+\newpage
+\section{Compatibility, diagnostics and limitations}
+\subsection{Scope of support}
+The implementation targets display-style mathematics with explicit,
+manual row breaks. It is not a general inline-math or script-style
+formatter. User macros are not expanded to discover hidden delimiters,
+alignment markers or metadata. Nested \env{matchedsplit} environments
+are outside the supported interface.
+
+Measurement executes mathematical contents more than once, especially
+with nested pairs. Avoid counters, file writes or other side effects in
+formula contents. Each middle delimiter is rendered as a relation atom;
+left and right delimiters are opening and closing atoms. Exact horizontal
+spacing need not match an unsplit native construction in every case.
+
+The package uses internal \pkg{amsmath} bindings. Native \env{alignat},
+\env{xalignat}, \env{xxalignat} and \env{flalign}, including their defined
+starred variants, retain their native behavior and do not acquire
+cross-row delimiter support. Their coexistence with the replacement
+has been tested. No general compatibility claim is made for third-party
+packages such as \pkg{mathtools}, \pkg{hyperref} or \pkg{unicode-math},
+or for publisher-specific document classes. This manual uses
+\pkg{hyperref}; that is an example configuration, not a complete
+compatibility test suite.
+
+\subsection{Diagnostics}
+The package reports unmatched \cs{right} or \cs{middle}, unclosed
+\cs{left}, a missing final delimiter, missing braced arguments for
+\cs{label}, \cs{tag} or \cs{intertext}, and missing closing brackets in
+row-spacing arguments. Invalid native mathematics and invalid delimiter
+tokens may instead produce a \TeX{} or \pkg{amsmath} error.
+
+Since an environment body is collected before processing, an error may
+be reported at its closing \verb|\end| rather than at the originating row.
+
+\subsection{Implementation and validation}
+A stack tracks open pairs. Each pair is measured in display style with
+invisible boundaries. Local delimiter constructions with height/depth
+phantoms allow its ends to occupy different alignment cells. Parser state
+and box assignments are local to the environment. Repeated token-list
+copying and measurement can be expensive for long or deeply nested input.
+
+The regression suite checks dimensions against native \TeX{}, label
+values, option combinations and failure diagnostics. All 45 positive
+engine/case combinations and twelve pdf\LaTeX{} negative cases pass in the
+tested configuration. Selected PDF outputs have also been inspected.
+\newpage
+\section{Version history and distribution information}
+\begin{description}
+\item[0.8.0 (2026-10-29)] Add package and environment rainbow options,
+local palette overrides and depth-based delimiter colors.
+\item[0.7.1 (2026-10-29)] Fix intertext measurement and align inside gather;
+validate metadata arguments and row-spacing delimiters. Unify the public
+package name as \pkg{matchedsplit}.
+\item[0.7] Add numbered display environments and optional align replacement.
+\item[0.6] Add optional split replacement.
+\item[0.5] Repair nested-pair measurement and preservation of token groups.
+\end{description}
+This package is supplied as a directly maintained \texttt{.sty} file;
+no docstrip extraction is required. The documentation source is
+\texttt{matchedsplit.tex}. Copyright \textcopyright\ 2026 Yu Zhai. This work may be distributed and/or
+modified under the LaTeX Project Public License, version 1.3c or (at your
+option) any later version. Its maintenance status is \emph{maintained};
+the current maintainer is Yu Zhai. See \texttt{LICENSE} and
+\texttt{MANIFEST.md} for the license notice and scope of the work.
+Send bug reports with a minimal example, engine version and log to
+\href{mailto:me@zhaiyusci.net}{\texttt{me@zhaiyusci.net}}.
+\end{document}
+
