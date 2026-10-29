@@ -2,6 +2,13 @@
 
 Copyright (C) 2026 Yu Zhai. LPPL 1.3c or later.
 
+## 0.8.1 -- 2026-10-29
+
+- Replace NewEnvironmentCopy with separate NewCommandCopy calls.
+- Require LaTeX 2020-10-01 or newer, with an explicit error on older kernels.
+- Add clean-archive verification and minimum-kernel rollback tests.
+- Document the difference between kernel rollback and historical distributions.
+
 ## 0.8.0 -- 2026-10-29
 
 - Add rainbow coloring at package and environment scope.

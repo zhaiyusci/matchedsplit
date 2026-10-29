@@ -75,3 +75,25 @@ rainbow_assertions.tex checks palette cycling, sibling mapping, setting
 reset, and equal width/height/depth with coloring enabled and disabled.
 rainbow_test.tex and rainbow_local_test.tex exercise package/local options,
 custom palettes, replacements, middle delimiters and ambient text color.
+
+## Release verification
+
+Run `./verify-release.ps1` after rebuilding dist/matchedsplit.zip. The script
+extracts the archive into a newly created system temporary directory and
+uses the archived implementation and documentation. Test fixtures and the
+test runner are supplied separately from the checkout as a harness; no
+package implementation is copied from the checkout.
+
+It clears custom TEXINPUTS, supplies an empty TEXMFHOME, isolates writable
+font caches, and checks kpsewhich plus recorder provenance. It runs the
+complete suite, rebuilds the archived manual and example with three engines,
+checks selected cases under the 2020-10-01 kernel rollback, and checks that
+2020-02-02 is rejected. The initial and final archive hashes must agree.
+The temporary directory and compiler logs are retained for inspection.
+This isolates files and configuration, not the operating system or the
+installed TeX distribution. Kernel rollback retains installed package versions.
+
+The native align copies use separate NewCommandCopy calls for start and
+end commands. This preserves command-copy semantics without requiring the
+NewEnvironmentCopy interface introduced in 2023. Both NewCommandCopy and
+the kernel hooks used here are available from LaTeX 2020-10-01.

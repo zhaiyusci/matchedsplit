@@ -25,7 +25,7 @@
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{\small\pkg{matchedsplit}}
-\fancyhead[R]{\small User manual, v0.8.0}
+\fancyhead[R]{\small User manual, v0.8.1}
 \fancyfoot[C]{\thepage}
 \setlength\parindent{0pt}
 \setlength\parskip{5pt plus 1pt}
@@ -33,7 +33,7 @@
 \title{The \pkg{matchedsplit} package\\[5pt]
 \large Matched delimiters across manually broken equations}
 \author{Yu Zhai\\\small\href{mailto:me@zhaiyusci.net}{\texttt{me@zhaiyusci.net}}}
-\date{Version 0.8.0\quad---\quad 29 October 2026}
+\date{Version 0.8.1\quad---\quad 29 October 2026}
 \begin{document}
 \maketitle
 \thispagestyle{empty}
@@ -55,10 +55,12 @@ Yu Zhai, \href{mailto:me@zhaiyusci.net}{\texttt{me@zhaiyusci.net}}.
 \newpage
 \section{Getting started}
 \subsection{Requirements and installation}
-The package requires \LaTeXe{} with the modern document-command,
-environment-copy and hook interfaces, and loads \pkg{amsmath}, \pkg{xcolor} and \pkg{l3keys2e} automatically.
-Testing used the pdf\LaTeX{}, Xe\LaTeX{} and Lua\LaTeX{} engines supplied
-with TeX Live 2026. Earlier formats have not been verified.
+The package requires \LaTeXe{} dated 2020-10-01 or later and loads
+\pkg{amsmath}, \pkg{xcolor} and \pkg{l3keys2e} automatically.
+The command-copy and hook interfaces require this kernel date. Older formats produce an explicit package error.
+Testing uses the engines supplied with TeX Live 2026, including kernel
+rollback to 2020-10-01. Rollback retains installed package versions and
+is not a test of an entire historical TeX distribution.
 
 For a local installation, place \texttt{matchedsplit.sty} beside the main
 source file. For a personal TEXMF installation, place it in
@@ -357,6 +359,8 @@ tested configuration. Selected PDF outputs have also been inspected.
 \newpage
 \section{Version history and distribution information}
 \begin{description}
+\item[0.8.1 (2026-10-29)] Use older command-copy primitives, declare the minimum LaTeX kernel date and add
+clean-archive and kernel-rollback verification.
 \item[0.8.0 (2026-10-29)] Add package and environment rainbow options,
 local palette overrides and depth-based delimiter colors.
 \item[0.7.1 (2026-10-29)] Fix intertext measurement and align inside gather;

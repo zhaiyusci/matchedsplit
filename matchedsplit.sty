@@ -6,8 +6,13 @@
 % Current Maintainer: Yu Zhai <me@zhaiyusci.net>.
 % The distributed Work is listed in MANIFEST.md.
 %
-\NeedsTeXFormat{LaTeX2e}
-\ProvidesExplPackage{matchedsplit}{2026-10-29}{0.8.0}{Nested matched delimiters across aligned rows}
+\NeedsTeXFormat{LaTeX2e}[2020-10-01]
+\IfFormatAtLeastTF{2020-10-01}{}{%
+  \PackageError{matchedsplit}{LaTeX 2020-10-01 or newer is required}%
+    {Update your LaTeX format and packages before loading matchedsplit.}%
+  \endinput
+}
+\ProvidesExplPackage{matchedsplit}{2026-10-29}{0.8.1}{Nested matched delimiters across aligned rows}
 \RequirePackage{amsmath}
 \RequirePackage{xcolor}
 \RequirePackage{l3keys2e}
@@ -264,8 +269,10 @@
   \cs_set_eq:NN \insplit@ \split
  }
 % Retain native amsmath numbering, measuring, tags and display layout.
-\NewEnvironmentCopy{msnativealign}{align}
-\NewEnvironmentCopy{msnativealign*}{align*}
+\NewCommandCopy\msnativealign\align
+\NewCommandCopy\endmsnativealign\endalign
+\exp_args:Ncc \NewCommandCopy {msnativealign*}{align*}
+\exp_args:Ncc \NewCommandCopy {endmsnativealign*}{endalign*}
 \cs_new_protected:Npn \__ms_align:nnn #1#2#3
  {\group_begin:
   \group_align_safe_begin:
@@ -290,5 +297,6 @@
    {\AddToHook{env/#1/begin}{\cs_set_eq:NN \endalign \endmsnativealign}}
  }
 \ExplSyntaxOff
+
 
 

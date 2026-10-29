@@ -1,6 +1,6 @@
 # Distribution manifest
 
-matchedsplit 0.8.0, 2026-10-29.
+matchedsplit 0.8.1, 2026-10-29.
 Copyright (C) 2026 Yu Zhai. LPPL 1.3c or later; maintained by Yu Zhai.
 
 The CTAN distribution consists of:

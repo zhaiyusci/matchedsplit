@@ -2,7 +2,7 @@
 
 Matched delimiters across manually broken equations.
 
-Version: 0.8.0 (2026-10-29)  
+Version: 0.8.1 (2026-10-29)  
 Author and current maintainer: Yu Zhai <me@zhaiyusci.net>  
 License: LaTeX Project Public License, version 1.3c or later  
 Maintenance status: maintained
@@ -23,10 +23,13 @@ are outside the supported interface. See the manual for details.
 
 ## Requirements
 
-A modern LaTeX format with the document-command, environment-copy and hook
-interfaces, and amsmath, xcolor and l3keys2e. Tested with pdfLaTeX, XeLaTeX and LuaLaTeX in
-TeX Live 2026. Earlier formats have not been verified. The package itself
-requires no special fonts or shell escape and is not platform-specific.
+LaTeX dated 2020-10-01 or later, with amsmath, xcolor and l3keys2e.
+The minimum kernel date is required by the command-copy and hook interfaces. Older formats
+are rejected with an explicit error. Tested with pdfLaTeX, XeLaTeX and
+LuaLaTeX in TeX Live 2026, including kernel rollback to 2020-10-01.
+Rollback keeps installed package versions; complete older distributions
+have not been verified. No special fonts or shell escape are needed by
+the package itself, and it is not platform-specific.
 
 ## Installation
 
@@ -101,3 +104,7 @@ for the license notice.
 
 Please send bug reports with a minimal reproducing document, the engine
 and distribution version, and the relevant log to <me@zhaiyusci.net>.
+
+Repository: <https://github.com/zhaiyusci/matchedsplit>
+
+Issue tracker: <https://github.com/zhaiyusci/matchedsplit/issues>
