@@ -97,3 +97,39 @@ The native align copies use separate NewCommandCopy calls for start and
 end commands. This preserves command-copy semantics without requiring the
 NewEnvironmentCopy interface introduced in 2023. Both NewCommandCopy and
 the kernel hooks used here are available from LaTeX 2020-10-01.
+
+## Tagged mathematics regression (issue #1)
+
+Run `python test-tagging.py` with Python 3, pypdf and LuaLaTeX available.
+This is a separate optional suite: the normal three-engine tests do not
+require a tagging-capable format or Python. The tagging suite uses the
+installed TeX Live 2026 tooling with lua-unicode-math and mathml-SE.
+Generated fixtures, PDFs, MathML and logs are retained in build/tagging.
+
+The implementation marks delimiter measurement with amsmath's scoped
+measuring state. Its tagging integration suppresses structure creation
+and LuaMML conversion in the discarded measurement. Delimiter sizing uses
+only the saved height and depth, rather than copying the measured node
+list. When LuaMML is available, its annotation interface excludes this
+zero-width sizing aid from the mathematical structure. The saved native
+align implementations run under their native environment names, which
+LuaMML uses to recognize equation-number structures. Restorations are local.
+
+The new tests compare native and matched versions of numbered and starred
+alignments, override options, rainbow coloring, nested/middle delimiters,
+inner aligned displays, explicit tags, suppressed numbering and intertext.
+They require clean final logs and compare normalized MathML rows, cells,
+identifiers, operators, fractions and equation numbers. Spacing and mrow /
+mstyle wrappers are intentionally excluded from the comparison: matched
+and native delimiters need not have identical sizing or grouping markup.
+PDF structure checks additionally verify parent links, unique structure
+references, a single Formula, absence of sizing phantoms and corresponding
+math element counts. This is regression coverage, not PDF/UA certification
+or a screen-reader interoperability test.
+
+The original 0.8.1 implementation fails the new suite on the reported
+warnings. During development, nested_test, numbered_override_test and
+rainbow_test were compiled with both implementations and rendered at
+120 dpi: all four resulting pages were pixel-identical. The unchanged
+three-engine suite and the 2020-10-01 kernel rollback remain required checks.
+Kernel rollback retains the installed dependency versions.

@@ -90,8 +90,10 @@
   \box_if_exist:cF {l__ms_delim_\l__ms_key_tl _box}
    {\box_new:c {l__ms_delim_\l__ms_key_tl _box}}
   % Invisible delimiters support middle without inflating the measured height.
+  % Use amsmath's scoped measuring state: its tagging integration suppresses
+  % both structure creation and LuaMML conversion for this discarded formula.
   \hbox_set:cn {l__ms_delim_\l__ms_key_tl _box}
-   {$\displaystyle \left.\l__ms_content_tl\right.$}
+   {\measuring@true $\displaystyle \left.\l__ms_content_tl\right.$}
   \tl_put_right:Nx \l__ms_render_tl
    {\exp_not:N \__ms_right:nn {\l__ms_key_tl}{\exp_not:n{#1}}}
   \__ms_append_active:n {\right#1}
@@ -221,8 +223,14 @@
  {\bool_if:NT \l__ms_rainbow_bool
    {\exp_args:Nx \color
      {\clist_item:Nn \l__ms_colors_clist {\prop_item:Nn \l__ms_color_prop {#1}}}}}
-\cs_new:Npn \__ms_phantom:n #1
- {\vphantom{\box_use:c {l__ms_delim_#1_box}}}
+% Retain only dimensions, never copy a measured box's tagged node list.
+% LuaMML must also ignore this invisible sizing aid in the final formula.
+\cs_new_protected:Npn \__ms_phantom:n #1
+ {\cs_if_exist:NTF \luamml_annotate:en
+   {\luamml_annotate:en {core=false}{\__ms_phantom_aux:n {#1}}}
+   {\__ms_phantom_aux:n {#1}}}
+\cs_new:Npn \__ms_phantom_aux:n #1
+ {\hbox:n{\tex_vrule:D width~0pt~height~\box_ht:c {l__ms_delim_#1_box}~depth~\box_dp:c {l__ms_delim_#1_box}\scan_stop:}}
 \cs_new:Npn \__ms_left:nn #1#2
  {\mathopen{\__ms_color:n {#1}\nulldelimiterspace=0pt \left#2\__ms_phantom:n{#1}\right.}}
 \cs_new:Npn \__ms_middle:nn #1#2
@@ -283,8 +291,13 @@
    {\exp_args:NnV \__ms_align_render:nn {#2}\l__ms_render_tl}
   \group_end:}
 \cs_new_protected:Npn \__ms_align_render:nn #1#2
- {\cs_set_eq:NN \endalign \endmsnativealign
-  \begin{msnativealign#1}#2\end{msnativealign#1}}
+ % LuaMML identifies equation-label structures by the native environment name.
+ % These restorations are local to __ms_align:nnn's group.
+ {\cs_set_eq:NN \align \msnativealign
+  \cs_set_eq:NN \endalign \endmsnativealign
+  \cs_set_eq:cc {align*}{msnativealign*}
+  \cs_set_eq:cc {endalign*}{endmsnativealign*}
+  \begin{align#1}#2\end{align#1}}
 \NewDocumentEnvironment{matchedalign}{O{} +b}{\__ms_align:nnn {#2}{}{#1}}{}
 \NewDocumentEnvironment{matchedalign*}{O{} +b}{\__ms_align:nnn {#2}{*}{#1}}{}
 \bool_if:NT \g__ms_override_align_bool

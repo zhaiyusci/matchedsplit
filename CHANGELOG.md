@@ -2,6 +2,12 @@
 
 Copyright (C) 2026 Yu Zhai. LPPL 1.3c or later.
 
+## Unreleased
+
+- Exclude delimiter measurement and invisible sizing aids from math tagging.
+- Preserve native align environment names for tagged equation numbers.
+- Add LuaLaTeX MathML and PDF structure comparisons against native amsmath.
+
 ## 0.8.1 -- 2026-10-29
 
 - Replace NewEnvironmentCopy with separate NewCommandCopy calls.
