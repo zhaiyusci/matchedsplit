@@ -133,3 +133,42 @@ rainbow_test were compiled with both implementations and rendered at
 120 dpi: all four resulting pages were pixel-identical. The unchanged
 three-engine suite and the 2020-10-01 kernel rollback remain required checks.
 Kernel rollback retains the installed dependency versions.
+
+
+## Embedded aligned blocks (unreleased)
+
+matchedaligned accepts [position][local color options], with position c by
+ default. It reuses the scanner and aligned renderer without consulting the
+amsmath tag-position policy. Native aligned is not overridden. The
+matchedaligned_test fixture checks dimensions against native aligned for
+all three positions, including multiple column groups, under tbtags/leqno;
+it also checks outer numbering and examples with nested colored delimiters.
+The tagging suite compares the new environment against native aligned for
+default and explicit positions, including local coloring. Invalid position
+values have a dedicated negative test. The package handles delimiter layout
+and does not guarantee the semantic correctness of formulas or of the
+generated mathematical structure in tagged PDFs.
+
+## Explicit column pairs (unreleased)
+
+matchedalignat and matchedalignat* pass the mandatory pair count to the
+saved native alignat implementation. Rendering uses the native environment
+name for LuaMML and locally restores endalign, including when overridealign
+and overridealignat are both enabled. overridealignat is independent.
+
+The alignat_test, alignat_override_test and alignat_left_test fixtures check
+native layout dimensions, multiple pairs with explicit spacing, nested
+delimiters, local colors, row spacing, labels, tags, intertext and suppressed
+numbers. The latter fixture combines fleqn and leqno. The tagging suite
+adds ten fixtures covering numbered/starred forms, combined overrides,
+multiple pairs and custom tags, compared with native MathML and PDF trees.
+
+Validation on 2026-11-02: all 60 positive engine/fixture combinations and
+13 expected-error cases passed; all 33 tagging fixtures passed. Independent
+overridealignat and kernel rollback to 2020-10-01 also compiled with all
+three engines. Rollback retains the installed dependency versions.
+The ten new alignat tagging fixtures, rebuilt with PDF/UA-2 metadata,
+document title and DisplayDocTitle, passed veraPDF 1.30.3's PDF/UA-2 machine
+checks (zero failed rules/checks). Reports are in build/accessibility/ua2
+and build/accessibility/alignat-ua2-summary.json. This does not establish
+screen-reader usability; desktop interaction testing remains paused.

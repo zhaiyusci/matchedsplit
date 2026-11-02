@@ -103,9 +103,12 @@ and alignment markers \verb|&|.
 \toprule
 Environment & Numbering and placement\\
 \midrule
+\env{matchedaligned} & Inner alignment; explicit top/center/bottom position.\\
 \env{matchedsplit} & Inner math alignment; numbering belongs to its parent.\\
 \env{matchedalign} & Display alignment; one number per row by default.\\
 \env{matchedalign*} & Display alignment; no automatic numbers.\\
+\env{matchedalignat} & Display alignment; explicit column pairs and spacing.\\
+\env{matchedalignat*} & Same layout; no automatic numbers.\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -130,6 +133,28 @@ G &= \left(\frac{a}{b}\\ &\quad +c\right)
 \end{matchedsplit}
 \end{equation}
 
+\subsection{Explicit column pairs and spacing (unreleased)}
+Use \verb|\begin{matchedalignat}[local options]{n}| directly in document
+text, outside math mode. The mandatory argument counts right/left column
+pairs, as in native \env{alignat}. Unlike \env{align}, no extra space is
+inserted between pairs: supply \cs{quad} or other spacing where needed.
+Native column-count limits apply.
+\begin{lstlisting}
+\begin{matchedalignat}[rainbow]{2}
+F &= \left(a+\frac{x}{y} &\quad&\text{first part}\\
+  &+b\right)            &&\text{continuation}
+\end{matchedalignat}
+\end{lstlisting}
+\begin{matchedalignat}[rainbow]{2}
+F &= \left(a+\frac{x}{y} &\quad&\text{first part}\\
+  &+b\right)            &&\text{continuation}
+\end{matchedalignat}
+The starred form \env{matchedalignat*} suppresses automatic numbering.
+Both forms retain native tags, labels, \cs{notag} and \cs{intertext}.
+The optional argument accepts the same local color settings as
+\env{matchedalign}. The independent \texttt{overridealignat} option
+replaces both native forms and can be combined with \texttt{overridealign}.
+
 \subsection{Replacing the native environments}
 \begin{center}
 \begin{tabular}{@{}lll@{}}
@@ -138,6 +163,7 @@ Option & Default & Effect\\
 \midrule
 \texttt{overridesplit} & Off & Replace \env{split}.\\
 \texttt{overridealign} & Off & Replace \env{align} and \env{align*}.\\
+\texttt{overridealignat} & Off & Replace \env{alignat} and \env{alignat*}.\\
 \texttt{rainbow} & Off & Color delimiters by nesting depth.\\
 \bottomrule
 \end{tabular}
@@ -155,9 +181,42 @@ Configure \pkg{amsmath} before loading this package, for example:
 \usepackage[tbtags,leqno]{amsmath}
 \usepackage[overridesplit]{matchedsplit}
 \end{lstlisting}
-With \texttt{tbtags}, replacement \env{split} aligns a right-hand tag with
+With \texttt{tbtags}, both \env{matchedsplit} and replacement
+\env{split} align a right-hand tag with
 the last row, or a left-hand tag with the first row. Otherwise it centers
-the block vertically for tagging.
+the block vertically for tagging. Applying this policy to the direct
+\env{matchedsplit} entry point is an unreleased change.
+
+The package handles delimiter layout. It does not guarantee the semantic
+correctness of formulas or of the generated mathematical structure in tagged PDFs.
+
+\subsection{An embedded alignment with explicit position}
+The unreleased \env{matchedaligned} environment uses native \env{aligned}
+layout. It takes two optional arguments: first the vertical position
+\texttt{t}, \texttt{c}, or \texttt{b} (default \texttt{c}), then local
+color options. This position is independent of \texttt{tbtags}.
+Numbering belongs to the outer environment. Native \env{aligned} is
+not replaced.
+\begin{lstlisting}
+\[
+\left\{
+\begin{matchedaligned}[t][rainbow,colors={blue,red}]
+F &= \left(a+\frac{x}{y}\\
+  &+b\right)
+\end{matchedaligned}
+\right.\qquad x>0
+\]
+\end{lstlisting}
+\[
+\left\{
+\begin{matchedaligned}[t][rainbow,colors={blue,red}]
+F &= \left(a+\frac{x}{y}\\ &+b\right)
+\end{matchedaligned}
+\right.\qquad x>0
+\]
+For centered placement with local coloring, use
+\verb|\begin{matchedaligned}[c][rainbow]|. With no arguments,
+\verb|\begin{matchedaligned}| uses centered placement and package defaults.
 
 \newpage
 \section{Delimiter sizing and nested structures}
@@ -280,7 +339,8 @@ f &= \left\{\frac{a}{b}+\left[x+\left(y\middle|z\\
 f &= \left\{\frac{a}{b}+\left[x+\left(y\middle|z\\
   &\quad +1\right)\right]\right\}
 \end{matchedalign*}
-The optional argument is available on \env{matchedsplit},
+For \env{matchedaligned}, use the second optional argument for colors.
+The single optional argument is available on \env{matchedsplit},
 \env{matchedalign} and \env{matchedalign*}. With the corresponding
 replacement options enabled it is also available on \env{split},
 \env{align} and \env{align*}. Environment settings override package
@@ -325,7 +385,7 @@ formula contents. Each middle delimiter is rendered as a relation atom;
 left and right delimiters are opening and closing atoms. Exact horizontal
 spacing need not match an unsplit native construction in every case.
 
-The package uses internal \pkg{amsmath} bindings. Native \env{alignat},
+The package uses internal \pkg{amsmath} bindings. Native
 \env{xalignat}, \env{xxalignat} and \env{flalign}, including their defined
 starred variants, retain their native behavior and do not acquire
 cross-row delimiter support. Their coexistence with the replacement

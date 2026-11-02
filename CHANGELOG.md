@@ -4,6 +4,14 @@ Copyright (C) 2026 Yu Zhai. LPPL 1.3c or later.
 
 ## Unreleased
 
+- Add matchedalignat and matchedalignat*, with native column counts, spacing,
+  numbering, local color options and independent overridealignat support.
+
+- Add matchedaligned with explicit block position and separate local color options.
+
+- Apply amsmath tag placement to matchedsplit as well as overridden split.
+- Clarify that delimiter layout carries no guarantee of semantic correctness.
+
 - Exclude delimiter measurement and invisible sizing aids from math tagging.
 - Preserve native align environment names for tagged equation numbers.
 - Add LuaLaTeX MathML and PDF structure comparisons against native amsmath.

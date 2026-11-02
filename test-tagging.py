@@ -52,9 +52,9 @@ def check_tree(path, expected):
         assert counts.get(tag, 0) == sum(1 for n in expected.iter() if n.tag == NS+tag), (tag, counts)
 
 
-def run(name, body, env='align', options='', native=False, wrap=False):
+def run(name, body, env='align', options='', native=False, wrap=False, env_options=''):
     package = r'\usepackage{amsmath}' if native else r'\usepackage['+options+r']{matchedsplit}'
-    formula = '\\begin{'+env+'}\n'+body+'\n\\end{'+env+'}'
+    formula = '\\begin{'+env+'}'+env_options+'\n'+body+'\n\\end{'+env+'}'
     if wrap:
         formula = '\\begin{equation}\n'+formula+'\n\\end{equation}'
     source = (r'\DocumentMetadata{tagging=on,tagging-setup={math/setup={mathml-SE}}}'+'\n'
@@ -97,6 +97,10 @@ assert run('middle', middle, 'matchedalign') == run('native-middle', middle_nati
 # matchedsplit is implemented with aligned; compare that native counterpart.
 reference = run('native-aligned', star_native, 'aligned', native=True, wrap=True)
 assert run('split', star_body, 'matchedsplit', wrap=True) == reference
+assert run('aligned', star_body, 'matchedaligned', wrap=True) == reference
+for position in ('t', 'c', 'b'):
+    baseline = run('native-aligned-'+position, star_native, 'aligned', native=True, wrap=True, env_options='['+position+']')
+    assert run('aligned-'+position, star_body, 'matchedaligned', wrap=True, env_options='['+position+'][rainbow]') == baseline
 assert run('override-split', star_body, 'split', 'overridesplit', wrap=True) == reference
 # Explicit tags, suppressed numbering, intertext, and numbering after a break.
 tagged = r'F &= \left(a+\frac{x}{y}\tag{A}\label{custom}\\ \intertext{Then} &+\frac{p}{q}\right)\notag\\ G &= z\label{last}'
@@ -107,4 +111,18 @@ for name in ('matched','rainbow','override'):
     assert r'\newlabel{eq:first}{{1}' in aux and r'\newlabel{eq:second}{{2}' in aux, name
 aux = (OUT/'custom-tags.aux').read_text()
 assert r'\newlabel{custom}{{{A}}' in aux and r'\newlabel{last}{{1}' in aux, aux
+# alignat keeps its native column count and equation-label semantics.
+for suffix, actual, control in [('', body, native_body), ('*', star_body, star_native)]:
+    name = 'alignat' + ('-star' if suffix else '')
+    baseline = run('native-'+name, control, 'alignat'+suffix, native=True, env_options='{1}')
+    assert run(name, actual, 'matchedalignat'+suffix, env_options='[rainbow]{1}') == baseline
+    assert run('override-'+name, actual, 'alignat'+suffix,
+               'overridealign,overridealignat', env_options='{1}') == baseline
+multi = r'F &= \left(a+\frac{x}{y} &\quad&\text{first}\\ &+\frac{p}{q}\right) &&\text{next}'
+multi_native = multi.replace(r' &\quad', r'\right. &\quad').replace(r'&+\frac', r'&\left.+\frac')
+assert run('alignat-multi', multi, 'matchedalignat', env_options='{2}') == run('native-alignat-multi', multi_native, 'alignat', native=True, env_options='{2}')
+assert run('alignat-tags', tagged, 'matchedalignat', env_options='{1}') == run('native-alignat-tags', tagged_native, 'alignat', native=True, env_options='{1}')
+for name in ('alignat', 'override-alignat'):
+    aux = (OUT/(name+'.aux')).read_text()
+    assert r'\newlabel{eq:first}{{1}' in aux and r'\newlabel{eq:second}{{2}' in aux, name
 print('All tagged MathML/PDF structure comparisons passed.')

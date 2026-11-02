@@ -20,6 +20,7 @@
 
 \bool_new:N \g__ms_override_split_bool
 \bool_new:N \g__ms_override_align_bool
+\bool_new:N \g__ms_override_alignat_bool
 \bool_new:N \g__ms_rainbow_bool
 \bool_new:N \l__ms_rainbow_bool
 \clist_new:N \g__ms_colors_clist
@@ -43,6 +44,7 @@
  {
   overridesplit .bool_gset:N = \g__ms_override_split_bool,
   overridealign .bool_gset:N = \g__ms_override_align_bool,
+  overridealignat .bool_gset:N = \g__ms_override_alignat_bool,
   rainbow .bool_gset:N = \g__ms_rainbow_bool,
   colors .code:n =
    {\__ms_set_colors:Nn \l__ms_colors_clist {#1}
@@ -262,17 +264,28 @@
   \bool_if:NT \l__ms_valid_bool
    {\begin{aligned}[#2]\tl_use:N \l__ms_render_tl\end{aligned}}
   \group_end:\group_align_safe_end:}
+% Like aligned, the position belongs to the block, independently of tag policy.
+\msg_new:nnn {matchedsplit}{position}{Unknown~aligned~position~'#1';~use~t,~c~or~b.}
+\NewDocumentEnvironment{matchedaligned}{O{c} O{} +b}
+ {\str_case:nnF {#1}
+   {{t}{\__ms_typeset:nnn {#3}{t}{#2}}
+    {c}{\__ms_typeset:nnn {#3}{c}{#2}}
+    {b}{\__ms_typeset:nnn {#3}{b}{#2}}}
+   {\msg_error:nnn {matchedsplit}{position}{#1}}}{}
+% Apply the same amsmath tag-placement policy to both entry points.
+\cs_new_protected:Npn \__ms_split:nn #1#2
+ {\ifctagsplit@
+    \__ms_typeset:nnn {#1}{c}{#2}
+  \else
+    \iftagsleft@ \__ms_typeset:nnn {#1}{t}{#2}
+    \else \__ms_typeset:nnn {#1}{b}{#2}\fi
+  \fi}
 \NewDocumentEnvironment{matchedsplit}{O{} +b}
- {\__ms_typeset:nnn {#2}{c}{#1}}{}
+ {\__ms_split:nn {#2}{#1}}{}
 \bool_if:NT \g__ms_override_split_bool
  {
   \RenewDocumentEnvironment{split}{O{} +b}
-   {\ifctagsplit@
-      \__ms_typeset:nnn {#2}{c}{#1}
-    \else
-      \iftagsleft@ \__ms_typeset:nnn {#2}{t}{#1}
-      \else \__ms_typeset:nnn {#2}{b}{#1}\fi
-    \fi}{}
+   {\__ms_split:nn {#2}{#1}}{}
   % amsmath locally restores split from insplit@ inside align and gather.
   \cs_set_eq:NN \insplit@ \split
  }
@@ -309,6 +322,36 @@
   \clist_map_inline:nn {alignat,alignat*,xalignat,xalignat*,xxalignat,flalign,flalign*}
    {\AddToHook{env/#1/begin}{\cs_set_eq:NN \endalign \endmsnativealign}}
  }
+% Use the native name for LuaMML, and retain alignat's column-count argument.
+\NewCommandCopy\msnativealignat\alignat
+\NewCommandCopy\endmsnativealignat\endalignat
+\exp_args:Ncc \NewCommandCopy {msnativealignat*}{alignat*}
+\exp_args:Ncc \NewCommandCopy {endmsnativealignat*}{endalignat*}
+\cs_new_protected:Npn \__ms_alignat:nnnn #1#2#3#4
+ {\group_begin:
+  \group_align_safe_begin:
+  \__ms_options:n {#4}
+  \__ms_prepare:n {#1}
+  \group_align_safe_end:
+  \bool_if:NT \l__ms_valid_bool
+   {\exp_args:NnnV \__ms_alignat_render:nnn {#2}{#3}\l__ms_render_tl}
+  \group_end:}
+\cs_new_protected:Npn \__ms_alignat_render:nnn #1#2#3
+ {\cs_set_eq:NN \alignat \msnativealignat
+  \cs_set_eq:NN \endalignat \endmsnativealignat
+  \cs_set_eq:cc {alignat*}{msnativealignat*}
+  \cs_set_eq:cc {endalignat*}{endmsnativealignat*}
+  \cs_set_eq:NN \endalign \endmsnativealign
+  \begin{alignat#1}{#2}#3\end{alignat#1}}
+\NewDocumentEnvironment{matchedalignat}{O{} m +b}
+ {\__ms_alignat:nnnn {#3}{}{#2}{#1}}{}
+\NewDocumentEnvironment{matchedalignat*}{O{} m +b}
+ {\__ms_alignat:nnnn {#3}{*}{#2}{#1}}{}
+\bool_if:NT \g__ms_override_alignat_bool
+ {\RenewDocumentEnvironment{alignat}{O{} m +b}
+   {\__ms_alignat:nnnn {#3}{}{#2}{#1}}{}
+  \RenewDocumentEnvironment{alignat*}{O{} m +b}
+   {\__ms_alignat:nnnn {#3}{*}{#2}{#1}}{}}
 \ExplSyntaxOff
 
 

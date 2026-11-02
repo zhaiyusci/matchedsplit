@@ -8,9 +8,9 @@ try {
     $env:TEXMFCACHE = $env:TEXMFVAR
     New-Item -ItemType Directory -Path $env:TEXMFVAR -Force | Out-Null
     foreach ($engine in @('pdflatex', 'xelatex', 'lualatex')) {
-        foreach ($case in @('demo', 'nested_test', 'regression', 'assertions', 'default_split_test', 'override_test', 'override_tbtags_test', 'override_left_test', 'numbered_test', 'numbered_override_test', 'numbered_left_test', 'audit_features', 'rainbow_test', 'rainbow_local_test', 'rainbow_assertions')) {
+        foreach ($case in @('demo', 'nested_test', 'regression', 'assertions', 'default_split_test', 'override_test', 'override_tbtags_test', 'override_left_test', 'numbered_test', 'numbered_override_test', 'numbered_left_test', 'audit_features', 'rainbow_test', 'rainbow_local_test', 'rainbow_assertions', 'split_placement_test', 'matchedaligned_test', 'alignat_test', 'alignat_override_test', 'alignat_left_test')) {
             $job = "$engine-$case"
-            $passes = if ($case -like 'numbered*') { 2 } else { 1 }
+            $passes = if ($case -like 'numbered*' -or $case -like 'alignat*') { 2 } else { 1 }
             foreach ($pass in 1..$passes) {
             $process = Start-Process -FilePath (Get-Command $engine).Source -ArgumentList @('-interaction=nonstopmode', '-halt-on-error', '-output-directory=build', "-jobname=$job", "$case.tex") -WindowStyle Hidden -PassThru -RedirectStandardOutput "build/$job.stdout.txt" -RedirectStandardError "build/$job.stderr.txt"
             if (-not $process.WaitForExit(30000)) {
@@ -39,6 +39,22 @@ try {
                     if (-not $aux.Contains('\newlabel{audit:' + $label[0] + '}{{' + $label[1] + '}')) { throw "$job incorrect audit label" }
                 }
             }
+            if ($case -eq 'split_placement_test' -and -not (Select-String -Path "build/$job.log" -Pattern 'SPLIT PLACEMENT PASSED' -Quiet)) { throw "$job missing placement assertions" }
+            if ($case -eq 'matchedaligned_test') {
+                if (-not (Select-String -Path "build/$job.log" -Pattern 'MATCHEDALIGNED PLACEMENT PASSED' -Quiet)) { throw "$job missing position assertions" }
+                $aux = Get-Content "build/$job.aux" -Raw
+                if (-not $aux.Contains('\newlabel{aligned:one}{{1}') -or -not $aux.Contains('\newlabel{aligned:two}{{2}')) { throw "$job incorrect outer numbering" }
+            }
+            if ($case -like 'alignat*') {
+                if (-not (Select-String "build/$job.log" -Pattern 'ALIGNAT ASSERTIONS PASSED' -Quiet)) { throw "$job missing alignat assertions" }
+                $aux = Get-Content "build/$job.aux" -Raw
+                $labels = @(@('first','1'), @('second','2'), @('custom','{A}'), @('third','3'))
+                if ($case -ne 'alignat_test') { $labels += @(@('fourth','4'), @('fifth','5')) }
+                foreach ($label in $labels) {
+                    if (-not $aux.Contains('\newlabel{at:' + $label[0] + '}{{' + $label[1] + '}')) { throw "$job incorrect alignat label: $($label[0])" }
+                }
+                if (Select-String "build/$job.log" -Pattern 'undefined references|multiply defined|Overfull' -Quiet) { throw "$job reference or layout warning" }
+            }
             Write-Output "PASS $job"
         }
     }
@@ -63,6 +79,7 @@ try {
         Write-Output "PASS $job (expected error)"
     }
 $optionFailures = @{
+ 'aligned-position' = '\documentclass{article}\usepackage{matchedsplit}\begin{document}\[\begin{matchedaligned}[invalid]a&=b\end{matchedaligned}\]\end{document}'
  'empty-package-colors' = '\documentclass{article}\usepackage[colors={}]{matchedsplit}\begin{document}x\end{document}'
  'empty-local-colors' = '\documentclass{article}\usepackage{matchedsplit}\begin{document}\begin{matchedalign}[rainbow,colors={}]x&=y\end{matchedalign}\end{document}'
  'invalid-rainbow-value' = '\documentclass{article}\usepackage{matchedsplit}\begin{document}\begin{matchedalign}[rainbow=invalid]x&=y\end{matchedalign}\end{document}'
@@ -82,9 +99,3 @@ foreach ($case in $optionFailures.Keys) {
     $env:TEXMFCACHE = $previousTexmfCache
     Pop-Location
 }
-
-
-
-
-
-

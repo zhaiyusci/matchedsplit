@@ -13,13 +13,68 @@ matchedsplit allows `\left`, `\middle` and `\right` constructions to
 cross manually chosen alignment rows. Each delimiter pair is measured
 independently, including nested pairs. The package provides:
 
+- `matchedaligned`: an inner alignment with explicit `[t]`, `[c]` or `[b]` positioning;
 - `matchedsplit`: an inner math alignment, with numbering supplied by its parent;
 - `matchedalign` and `matchedalign*`: numbered and unnumbered display alignments;
-- `overridesplit` and `overridealign`: opt-in replacements for the amsmath environments.
+- `matchedalignat` and `matchedalignat*`: explicit column pairs and spacing;
+- `overridesplit`, `overridealign` and `overridealignat`: opt-in replacements for the amsmath environments.
 
 It does not choose line breaks automatically. Groups and inner environments
 are kept intact; cross-boundary pairing and side-effectful formula macros
 are outside the supported interface. See the manual for details.
+
+## Unreleased: split tag placement
+
+Both `matchedsplit` and the replacement `split` follow amsmath's
+`centertags` / `tbtags` policy. With `tbtags`, a right-hand tag aligns with
+the bottom row and a left-hand tag with the top row. Load amsmath with
+these options before loading matchedsplit. The implementation still uses
+an aligned layout, not an exact reproduction of native split.
+
+The package handles delimiter layout. It does not guarantee the semantic
+correctness of formulas or of the generated mathematical structure in tagged PDFs.
+
+## Unreleased: matchedaligned
+
+Use `matchedaligned` as a block inside a larger formula. It does not
+number its rows. Its first optional argument is the position (`t`, `c`,
+or `b`; default `c`), independent of `tbtags`. Its second optional
+argument contains local color settings:
+
+```tex
+\[
+\left\{
+\begin{matchedaligned}[t][rainbow,colors={blue,red}]
+F &= \left(a+\frac{x}{y}\\
+  &+b\right)
+\end{matchedaligned}
+\right.\qquad x>0
+\]
+```
+
+For centered positioning with local options, write
+`\begin{matchedaligned}[c][rainbow]`. With no options, use
+`\begin{matchedaligned}`. Native `aligned` is not replaced.
+
+## Unreleased: matchedalignat
+
+Use `\begin{matchedalignat}[local options]{n}` (or `matchedalignat*`)
+directly in document text. As in native `alignat`, `n` counts right/left
+column pairs. No extra space is inserted between pairs; add `\quad` or
+other spacing yourself. The unstarred form numbers rows; the starred form
+suppresses automatic numbers. Tags, labels, `\notag` and `\intertext`
+retain native behavior.
+
+```tex
+\begin{matchedalignat}[rainbow]{2}
+F &= \left(a+\frac{x}{y} &\quad&\text{first part}\\
+  &+b\right)            &&\text{continuation}
+\end{matchedalignat}
+```
+
+The independent `overridealignat` option replaces `alignat` and `alignat*`
+with the same syntax. It may be combined with `overridealign`. The native
+column-count limit applies.
 
 ## Requirements
 
@@ -66,6 +121,7 @@ Enable coloring globally with `\usepackage[rainbow]{matchedsplit}`, or
 locally with `\begin{matchedalign}[rainbow]`. Use `[rainbow=false]` to
 disable a global default for one environment. The same local options work
 on matchedsplit, matchedalign*, and on the replaced split/align/align*.
+For matchedaligned, color settings belong in the second optional argument.
 
 Use `colors={blue,orange,teal}` at either level to select a nonempty xcolor
 palette. The palette cycles by nesting depth; sibling pairs reuse their
