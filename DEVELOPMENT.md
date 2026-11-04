@@ -4,10 +4,9 @@ Copyright (C) 2026 Yu Zhai. LPPL 1.3c or later.
 
 ## Structure
 
-`matchedsplit.sty` is the single implementation. Public interfaces are
-specified in matchedsplit.pdf; names beginning with `__ms` and the
-msnativealign environments are internal and are not stable APIs.
-`regression.tex` retains the extended user examples.
+`matchedsplit.sty` contains the original measurement-based implementation
+on all three engines. New physical partition and sizing research has moved
+to the separate sibling project `matchedsplit-luatex`.
 
 ## Processing
 
@@ -21,6 +20,26 @@ with invisible boundaries and records the dimensions in a local box.
 The rendered stream contains complete local delimiter constructions with
 phantoms. matchedsplit passes that stream to aligned; matchedalign passes
 it to a saved native align environment for numbering and layout.
+
+Pairs are marked when an alignment tab or row break occurs while they are
+open. A pair contained in one cell renders with native left/middle/right,
+preserving its Inner math class, spacing and script attachment. Rainbow
+uses the native-pair color renderer for these pairs. Spanning pairs retain
+the matched-size open/relation/close atoms. This decision is per pair, so
+a local pair nested inside a spanning pair can still use native layout.
+Native-spacing tests compare operator-adjacent pairs, neighboring pairs,
+middle delimiters and scripts against aligned, with and without rainbow.
+The Unicode variant uses XITS Math to cover the user's demo configuration.
+
+The current three-formula demo is checked in place: rainbow and plain
+matchedsplit are compared with its native split example after removing
+whole-formula translation. LuaLaTeX coordinates differ by at most 0.001 pt;
+XeLaTeX coordinates differ by at most 0.010 pt. Native-spacing box dimensions
+are also checked exactly under XITS Math. The spacing change passed all
+62 other positive engine/fixture combinations, 13 expected-error cases,
+41 tagging fixtures and the three-engine kernel rollback checks. The user
+demo was compiled separately with LuaLaTeX and XeLaTeX. Logs are in
+build/spacing-regression.txt and build/spacing-tagging.txt.
 
 ## Invariants
 
@@ -75,6 +94,46 @@ rainbow_assertions.tex checks palette cycling, sibling mapping, setting
 reset, and equal width/height/depth with coloring enabled and disabled.
 rainbow_test.tex and rainbow_local_test.tex exercise package/local options,
 custom palettes, replacements, middle delimiters and ambient text color.
+
+With rainbow enabled, a separate recursive pass colors explicit delimiter
+pairs inside groups. It preserves group braces and spaces, does not expand
+user macros, and skips native inner environments. Measurement retains the
+original group tokens. Grouped pairs use native left/middle/right sizing
+in the current math style and inherit the surrounding palette depth.
+The renderer completes color resets inside an inner atom before returning
+to the surrounding formula. This prevents color stack nodes from separating
+a right delimiter from its scripts, leaving native script/prime handling intact.
+rainbow_groups_test.tex compares colored/uncolored dimensions for exponents,
+fractions, nested groups, middle delimiters, primes and scripts on pairs.
+It also asserts inherited depth and local rainbow=false behavior. The
+unicode fixture runs the same checks with unicode-math under XeLaTeX and LuaLaTeX.
+Tagging tests compare grouped delimiters and script attachment with native
+MathML and PDF structure.
+
+Validation on 2026-11-04: 65 positive engine/fixture combinations and 13
+expected-error cases passed, along with all 37 tagging fixtures. The four
+new grouped-color fixtures passed veraPDF 1.30.3 PDF/UA-2 machine checks
+after adding document-level metadata. Kernel rollback to 2020-10-01 passed
+the grouped-color fixture with all three engines and installed dependencies.
+The initial projected-partition comparison used the previous rainbow-enabled
+implementation and therefore missed its existing top-level script-attachment
+bug. Top-level delimiter renderers now also finish color resets inside their
+math atoms. The full user demo with physics and XITS Math is compared against
+rainbow=false, not against the old colored output. Tests include powers on
+absolute-value delimiters and scripts/primes on top-level and cross-row pairs.
+Logs for the initial grouped-color checks are retained in
+build/rainbow-groups-regression.txt, build/rainbow-groups-tagging.txt and
+build/accessibility/groups-validation.txt.
+
+Follow-up top-level script validation: the current XITS Math/physics demo
+matches rainbow=false in every extracted glyph position and size with
+LuaLaTeX and XeLaTeX. The remaining 62 positive engine/fixture combinations
+and 13 expected-error cases passed; the edited Unicode-only demo was checked
+separately rather than passed to pdfLaTeX. All 39 tagging fixtures passed,
+including rainbow/plain top-level right-delimiter script comparisons. The
+two new fixtures passed veraPDF PDF/UA-2 machine checks. Logs are in
+build/right-scripts-regression.txt, build/right-scripts-tagging.txt and
+build/accessibility/right-scripts-validation.txt.
 
 ## Release verification
 

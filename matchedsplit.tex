@@ -10,7 +10,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage[margin=27mm,headheight=14pt]{geometry}
-\usepackage{booktabs,array,xcolor,listings,fancyhdr}
+\usepackage{booktabs,array,xcolor,listings,fancyhdr,etoolbox}
 \usepackage{matchedsplit}
 \usepackage{amssymb}
 \usepackage[colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!45!black]{hyperref}
@@ -19,6 +19,8 @@
  columns=fullflexible,keepspaces=true,breaklines=true,
  frame=single,rulecolor=\color{black!20},framesep=6pt,
  aboveskip=10pt,belowskip=10pt,showstringspaces=false}
+\BeforeBeginEnvironment{lstlisting}{\par\noindent\begin{minipage}{\linewidth}}
+\AfterEndEnvironment{lstlisting}{\end{minipage}\par}
 \newcommand\pkg[1]{\textsf{#1}}
 \newcommand\env[1]{\texttt{#1}}
 \newcommand\cs[1]{\texttt{\textbackslash#1}}
@@ -95,7 +97,7 @@ Compile twice to resolve references, such as \eqref{manual:second}.
 The package does not choose line breaks: the author supplies \verb|\\|
 and alignment markers \verb|&|.
 
-\newpage
+
 \section{Environments and package options}
 \subsection{Environment reference}
 \begin{center}
@@ -218,8 +220,12 @@ For centered placement with local coloring, use
 \verb|\begin{matchedaligned}[c][rainbow]|. With no arguments,
 \verb|\begin{matchedaligned}| uses centered placement and package defaults.
 
-\newpage
+
 \section{Delimiter sizing and nested structures}
+A pair wholly contained in one alignment cell keeps native left/right layout,
+including its mathematical spacing next to operators. Spanning pairs retain
+the original matched-size measurement method on every engine.
+
 A pair is sized from its mathematical contents after removing the
 outer alignment markers, row breaks and supported numbering commands.
 The size is \emph{not} the total height of the multirow display. A tall
@@ -258,13 +264,14 @@ Use standard single-token delimiter characters or commands, for example
 \verb|(|, \verb|\{|, \verb|\langle| and \verb|.|.
 
 \subsection{Groups and inner environments}
-Braced groups retain their braces and are not recursively rewritten.
+Braced groups retain their braces. Rainbow mode recursively colors explicit
+delimiter pairs inside groups without changing their mathematical structure.
 Inner environments, including matrices, retain their own alignment
 markers and row breaks. A delimiter pair must not cross a group or
 inner-environment boundary. Native math inside such a structure must
 already be valid on its own; the outer scanner does not repair it.
 
-\newpage
+
 \section{Row control, tags and references}
 Supported row endings are \verb|\\|, \verb|\\*|,
 \verb|\\[3pt]| and \verb|\\*[3pt]|. Their spacing arguments are
@@ -312,8 +319,12 @@ The text is not measured as part of the mathematics.
 \pkg{amsmath}. They do not make a boxed \env{matchedsplit} breakable.
 Comprehensive multipage pagination tests have not been performed.
 
-\newpage
+
 \section{Rainbow delimiters}
+The option \texttt{niji} aliases \texttt{rainbow} at package and environment
+scope; \texttt{niji=false} disables it locally. Color resets stay inside the
+math atom so superscripts, subscripts and primes retain their attachment.
+
 The optional rainbow mode colors delimiters by nesting depth. Matching
 left and right delimiters, and any middle delimiters belonging to that
 pair, use the same color across rows. Ordinary formula contents and
@@ -367,10 +378,12 @@ the package's \texttt{msblue}, \texttt{msorange}, \texttt{msgreen},
 Colors cycle when nesting exceeds the palette length. Sibling pairs at
 the same depth reuse the same color, and every environment starts at
 depth one. Invisible delimiters still participate in depth counting.
-Only directly parsed delimiters are colored: groups, native inner
-environments and delimiters hidden in macros remain outside the scanner.
+Explicit \cs{left}, \cs{middle} and \cs{right} pairs inside braced groups
+are also colored in their native math style. Native inner environments and
+pairs hidden in macros remain outside the scanner. Ordinary delimiters are
+not colored.
 
-\newpage
+
 \section{Compatibility, diagnostics and limitations}
 \subsection{Scope of support}
 The implementation targets display-style mathematics with explicit,
@@ -381,9 +394,9 @@ are outside the supported interface.
 
 Measurement executes mathematical contents more than once, especially
 with nested pairs. Avoid counters, file writes or other side effects in
-formula contents. Each middle delimiter is rendered as a relation atom;
-left and right delimiters are opening and closing atoms. Exact horizontal
-spacing need not match an unsplit native construction in every case.
+formula contents. For spanning pairs, middle delimiters are relation atoms
+and left/right delimiters are opening/closing atoms. Pairs contained in one
+cell retain native left/right layout and spacing.
 
 The package uses internal \pkg{amsmath} bindings. Native
 \env{xalignat}, \env{xxalignat} and \env{flalign}, including their defined
@@ -413,10 +426,9 @@ and box assignments are local to the environment. Repeated token-list
 copying and measurement can be expensive for long or deeply nested input.
 
 The regression suite checks dimensions against native \TeX{}, label
-values, option combinations and failure diagnostics. All 45 positive
-engine/case combinations and twelve pdf\LaTeX{} negative cases pass in the
-tested configuration. Selected PDF outputs have also been inspected.
-\newpage
+values, option combinations and failure diagnostics on all three engines,
+including expected-error cases. Selected PDF outputs have also been inspected.
+
 \section{Version history and distribution information}
 \begin{description}
 \item[0.8.1 (2026-10-29)] Use older command-copy primitives, declare the minimum LaTeX kernel date and add

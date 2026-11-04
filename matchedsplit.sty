@@ -46,6 +46,7 @@
   overridealign .bool_gset:N = \g__ms_override_align_bool,
   overridealignat .bool_gset:N = \g__ms_override_alignat_bool,
   rainbow .bool_gset:N = \g__ms_rainbow_bool,
+  niji .bool_gset:N = \g__ms_rainbow_bool,
   colors .code:n =
    {\__ms_set_colors:Nn \l__ms_colors_clist {#1}
     \clist_gset_eq:NN \g__ms_colors_clist \l__ms_colors_clist}
@@ -55,6 +56,7 @@
 \keys_define:nn {matchedsplit/environment}
  {
   rainbow .bool_set:N = \l__ms_rainbow_bool,
+  niji .bool_set:N = \l__ms_rainbow_bool,
   colors .code:n = {\__ms_set_colors:Nn \l__ms_colors_clist {#1}}
  }
 \cs_new_protected:Npn \__ms_options:n #1
@@ -73,6 +75,7 @@
 \int_new:N \l__ms_env_depth_int
 \int_new:N \l__ms_env_pending_int
 \prop_new:N \l__ms_content_prop
+\prop_new:N \l__ms_crossing_prop
 \bool_new:N \l__ms_valid_bool
 \msg_new:nnn {matchedsplit} {unmatched} {Unmatched~#1~in~matchedsplit.}
 \msg_new:nnn {matchedsplit} {metadata} {Expected~a~braced~argument~after~label/tag/intertext.}
@@ -115,6 +118,7 @@
              {\seq_count:N \l__ms_stack_seq - 1}
              {\clist_count:N \l__ms_colors_clist} + 1}}
           \prop_put:NVn \l__ms_content_prop \l__ms_key_tl {}
+          \prop_put:NVn \l__ms_crossing_prop \l__ms_key_tl {0}
           \tl_put_right:Nx \l__ms_render_tl
             {\exp_not:N \__ms_left:nn {\l__ms_key_tl}{\exp_not:n{#1}}}}
       {2}{\seq_if_empty:NTF \l__ms_stack_seq
@@ -137,10 +141,14 @@
           {\int_set:Nn \l__ms_pending_int {3}}
           {\tl_put_right:Nn \l__ms_render_tl {#1}
            \token_if_eq_meaning:NNTF #1 \\
-             {\__ms_row_options:}
-             {\token_if_eq_charcode:NNF #1 & {\__ms_append_active:n {#1}}}}}}
+             {\__ms_mark_crossing:\__ms_row_options:}
+             {\token_if_eq_charcode:NNTF #1 &
+               {\__ms_mark_crossing:}{\__ms_append_active:n {#1}}}}}}
    }
  }
+\cs_new_protected:Npn \__ms_mark_crossing:
+ {\seq_map_inline:Nn \l__ms_stack_seq
+   {\prop_put:Nnn \l__ms_crossing_prop {##1}{1}}}
 % Preserve row spacing in the output, but remove it from the measurement.
 \cs_new_protected:Npn \__ms_row_options:
  {
@@ -172,11 +180,113 @@
   \int_compare:nNnTF {\l__ms_pending_int} = {0}
    {\int_add:Nn \l__ms_env_depth_int {\l__ms_env_pending_int}
     \int_zero:N \l__ms_env_pending_int
-    \__ms_append_active:n {{#1}} \tl_put_right:Nn \l__ms_render_tl {{#1}}}
+    \__ms_append_active:n {{#1}}
+    \bool_lazy_and:nnTF {\l__ms_rainbow_bool}
+      {\int_compare_p:n {\l__ms_env_depth_int = 0}}
+     {\__ms_color_group:nnN {#1}{\seq_count:N \l__ms_stack_seq}\l__ms_render_tl}
+     {\tl_put_right:Nn \l__ms_render_tl {{#1}}}}
    {\bool_set_false:N \l__ms_valid_bool \msg_error:nn {matchedsplit}{delimiter}
     \int_zero:N \l__ms_pending_int}}
 \cs_new_protected:Npn \__ms_single:w #1#2\q_stop
  {\tl_set:Nn \l__ms_input_tl {#2}\tl_remove_once:Nn \l__ms_input_tl {\q_mark} \__ms_dispatch:n {#1}}
+% Color explicit native delimiter pairs inside groups without measuring them.
+% Native left/right retain the current math style and cannot cross group bounds.
+\tl_new:N \l__ms_group_input_tl
+\tl_new:N \l__ms_group_render_tl
+\tl_new:N \l__ms_group_color_tl
+\int_new:N \l__ms_group_depth_int
+\int_new:N \l__ms_group_pending_int
+\int_new:N \l__ms_group_env_int
+\int_new:N \l__ms_group_env_pending_int
+\int_new:N \l__ms_group_base_int
+\bool_new:N \l__ms_group_valid_bool
+\cs_generate_variant:Nn \tl_if_head_is_space:nTF {V}
+\cs_new_protected:Npn \__ms_color_group:nnN #1#2#3
+ {\group_begin:
+  \tl_set:Nn \l__ms_group_input_tl {#1}
+  \tl_clear:N \l__ms_group_render_tl
+  \int_set:Nn \l__ms_group_depth_int {#2}
+  \int_set_eq:NN \l__ms_group_base_int \l__ms_group_depth_int
+  \bool_set_true:N \l__ms_group_valid_bool
+  \int_zero:N \l__ms_group_pending_int
+  \int_zero:N \l__ms_group_env_int
+  \int_zero:N \l__ms_group_env_pending_int
+  \__ms_group_scan:
+  % Leave malformed or cross-group pairs to native TeX diagnostics.
+  \int_compare:nNnF {\l__ms_group_pending_int} = {0}
+   {\bool_set_false:N \l__ms_group_valid_bool}
+  \int_compare:nNnF {\l__ms_group_depth_int} = {\l__ms_group_base_int}
+   {\bool_set_false:N \l__ms_group_valid_bool}
+  \bool_if:NF \l__ms_group_valid_bool {\tl_set:Nn \l__ms_group_render_tl {#1}}
+  \tl_set:Nx \l__ms_group_render_tl {{\exp_not:V \l__ms_group_render_tl}}
+  \exp_args:NNNV \group_end: \tl_put_right:Nn #3\l__ms_group_render_tl}
+\cs_new_protected:Npn \__ms_group_scan:
+ {\tl_if_empty:NF \l__ms_group_input_tl
+   {\tl_if_head_is_space:VTF \l__ms_group_input_tl
+     {\exp_after:wN \__ms_group_space:w \l__ms_group_input_tl \q_mark \q_stop}
+     {\tl_if_head_is_group:VTF \l__ms_group_input_tl
+       {\exp_after:wN \__ms_group_nested:w \l__ms_group_input_tl \q_mark \q_stop}
+       {\exp_after:wN \__ms_group_token:w \l__ms_group_input_tl \q_mark \q_stop}}
+    \__ms_group_scan:}}
+\cs_new_protected:Npn \__ms_group_space:w #1~#2\q_stop
+ {\tl_put_right:Nn \l__ms_group_render_tl {~}
+  \tl_set:Nn \l__ms_group_input_tl {#2}\tl_remove_once:Nn \l__ms_group_input_tl {\q_mark}}
+\cs_new_protected:Npn \__ms_group_nested:w #1#2\q_stop
+ {\tl_set:Nn \l__ms_group_input_tl {#2}\tl_remove_once:Nn \l__ms_group_input_tl {\q_mark}
+  \int_compare:nNnF {\l__ms_group_pending_int} = {0}
+   {\bool_set_false:N \l__ms_group_valid_bool}
+  \int_compare:nNnTF {\l__ms_group_env_pending_int} = {0}
+   {\int_compare:nNnTF {\l__ms_group_env_int} = {0}
+     {\__ms_color_group:nnN {#1}{\l__ms_group_depth_int}\l__ms_group_render_tl}
+     {\tl_put_right:Nn \l__ms_group_render_tl {{#1}}}}
+   {\int_add:Nn \l__ms_group_env_int {\l__ms_group_env_pending_int}
+    \int_zero:N \l__ms_group_env_pending_int
+    \tl_put_right:Nn \l__ms_group_render_tl {{#1}}}}
+\cs_new_protected:Npn \__ms_group_token:w #1#2\q_stop
+ {\tl_set:Nn \l__ms_group_input_tl {#2}\tl_remove_once:Nn \l__ms_group_input_tl {\q_mark}
+  \int_compare:nNnTF {\l__ms_group_pending_int} > {0}
+   {\int_case:nn {\l__ms_group_pending_int}
+     {{1}{\int_incr:N \l__ms_group_depth_int
+          \tl_put_right:Nx \l__ms_group_render_tl
+           {\exp_not:N \__ms_native_left:nn
+            {\clist_item:Nn \l__ms_colors_clist
+              {\int_mod:nn {\l__ms_group_depth_int-1}{\clist_count:N \l__ms_colors_clist}+1}}
+            {\exp_not:n {#1}}}}
+      {2}{\int_compare:nNnF {\l__ms_group_depth_int} > {\l__ms_group_base_int}
+           {\bool_set_false:N \l__ms_group_valid_bool}
+          \tl_put_right:Nn \l__ms_group_render_tl {\__ms_native_middle:n {#1}}}
+      {3}{\int_compare:nNnF {\l__ms_group_depth_int} > {\l__ms_group_base_int}
+           {\bool_set_false:N \l__ms_group_valid_bool}
+          \int_decr:N \l__ms_group_depth_int
+          \tl_put_right:Nn \l__ms_group_render_tl {\__ms_native_right:n {#1}}}}
+    \int_zero:N \l__ms_group_pending_int}
+   {\token_if_eq_meaning:NNTF #1\begin
+     {\int_set:Nn \l__ms_group_env_pending_int {1}\tl_put_right:Nn \l__ms_group_render_tl {#1}}
+     {\token_if_eq_meaning:NNTF #1\end
+       {\int_set:Nn \l__ms_group_env_pending_int {-1}\tl_put_right:Nn \l__ms_group_render_tl {#1}}
+       {\int_compare:nNnTF {\l__ms_group_env_int} > {0}
+         {\tl_put_right:Nn \l__ms_group_render_tl {#1}}
+         {\token_if_eq_meaning:NNTF #1\left
+           {\int_set:Nn \l__ms_group_pending_int {1}}
+           {\token_if_eq_meaning:NNTF #1\middle
+             {\int_set:Nn \l__ms_group_pending_int {2}}
+             {\token_if_eq_meaning:NNTF #1\right
+               {\int_set:Nn \l__ms_group_pending_int {3}}
+               {\tl_put_right:Nn \l__ms_group_render_tl {#1}}}}}}}}}
+% Finish all color-stack resets inside the math atom, so following native
+% scripts and primes attach to the delimiter pair rather than an empty atom.
+\cs_new_protected:Npn \__ms_native_left:nn #1#2
+ {\mathinner\bgroup\group_begin:
+  \tl_set:Nn \l__ms_group_color_tl {#1}
+  \colorlet{ms@group@content}{.}
+  \color{#1}\left#2\color{ms@group@content}}
+\cs_new_protected:Npn \__ms_native_middle:n #1
+ {\exp_args:Nno \__ms_native_middle:nn {#1}{\current@color}}
+\cs_new_protected:Npn \__ms_native_middle:nn #1#2
+ {\color{\l__ms_group_color_tl}\middle#1
+  \cs_set:Npn \current@color {#2}\set@color}
+\cs_new_protected:Npn \__ms_native_right:n #1
+ {\color{\l__ms_group_color_tl}\right#1\group_end:\egroup}
 % Keep nested environments opaque; their alignment tokens belong to them.
 \cs_new_protected:Npn \__ms_copy:n #1
  {\__ms_append_active:n {#1}\tl_put_right:Nn \l__ms_render_tl {#1}}
@@ -233,18 +343,29 @@
    {\__ms_phantom_aux:n {#1}}}
 \cs_new:Npn \__ms_phantom_aux:n #1
  {\hbox:n{\tex_vrule:D width~0pt~height~\box_ht:c {l__ms_delim_#1_box}~depth~\box_dp:c {l__ms_delim_#1_box}\scan_stop:}}
+% Color resets must finish inside the atom, before TeX attaches any scripts.
 \cs_new:Npn \__ms_left:nn #1#2
- {\mathopen{\__ms_color:n {#1}\nulldelimiterspace=0pt \left#2\__ms_phantom:n{#1}\right.}}
+ {\str_if_eq:eeTF {\prop_item:Nn \l__ms_crossing_prop {#1}}{0}
+   {\bool_if:NTF \l__ms_rainbow_bool
+     {\exp_args:Nx \__ms_native_left:nn
+       {\clist_item:Nn \l__ms_colors_clist {\prop_item:Nn \l__ms_color_prop {#1}}}{#2}}
+     {\left#2}}
+   {\mathopen{\group_begin:\__ms_color:n {#1}\nulldelimiterspace=0pt \left#2\__ms_phantom:n{#1}\right.\group_end:}}}
 \cs_new:Npn \__ms_middle:nn #1#2
- {\mathrel{\__ms_color:n {#1}\nulldelimiterspace=0pt \left.\__ms_phantom:n{#1}\middle#2\right.}}
+ {\str_if_eq:eeTF {\prop_item:Nn \l__ms_crossing_prop {#1}}{0}
+   {\bool_if:NTF \l__ms_rainbow_bool {\__ms_native_middle:n {#2}}{\middle#2}}
+   {\mathrel{\group_begin:\__ms_color:n {#1}\nulldelimiterspace=0pt \left.\__ms_phantom:n{#1}\middle#2\right.\group_end:}}}
 \cs_new:Npn \__ms_right:nn #1#2
- {\mathclose{\__ms_color:n {#1}\nulldelimiterspace=0pt \left.\__ms_phantom:n{#1}\right#2}}
+ {\str_if_eq:eeTF {\prop_item:Nn \l__ms_crossing_prop {#1}}{0}
+   {\bool_if:NTF \l__ms_rainbow_bool {\__ms_native_right:n {#2}}{\right#2}}
+   {\mathclose{\group_begin:\__ms_color:n {#1}\nulldelimiterspace=0pt \left.\__ms_phantom:n{#1}\right#2\group_end:}}}
 \cs_new_protected:Npn \__ms_prepare:n #1
  {
   \tl_set:Nn \l__ms_input_tl {#1}
   \tl_clear:N \l__ms_render_tl
   \seq_clear:N \l__ms_stack_seq
   \prop_clear:N \l__ms_content_prop
+  \prop_clear:N \l__ms_crossing_prop
   \prop_clear:N \l__ms_color_prop
   \int_zero:N \l__ms_env_depth_int
   \int_zero:N \l__ms_env_pending_int
@@ -353,6 +474,3 @@
   \RenewDocumentEnvironment{alignat*}{O{} m +b}
    {\__ms_alignat:nnnn {#3}{*}{#2}{#1}}{}}
 \ExplSyntaxOff
-
-
-

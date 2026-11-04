@@ -164,3 +164,13 @@ and distribution version, and the relevant log to <me@zhaiyusci.net>.
 Repository: <https://github.com/zhaiyusci/matchedsplit>
 
 Issue tracker: <https://github.com/zhaiyusci/matchedsplit/issues>
+
+## Current maintenance scope
+
+All engines retain the original measurement-based method. The two maintenance
+fixes preserve rainbow superscript/subscript attachment and native spacing
+around delimiter pairs contained in one alignment cell (including after
+operators). Explicit left/right pairs inside groups can also be colored.
+`niji` aliases `rainbow` at package and environment scope.
+The new LuaTeX physical-partition implementation and sizing experiments are
+maintained in the independent sibling project `matchedsplit-luatex`.

@@ -125,4 +125,13 @@ assert run('alignat-tags', tagged, 'matchedalignat', env_options='{1}') == run('
 for name in ('alignat', 'override-alignat'):
     aux = (OUT/(name+'.aux')).read_text()
     assert r'\newlabel{eq:first}{{1}' in aux and r'\newlabel{eq:second}{{2}' in aux, name
+grouped = r'F &= \left[e^{-\left(\frac{a}{b}\right)\left(A+B\right)}\\ &+x_{\left(i\right)}\right]'
+grouped_native = grouped.replace(r'\\', r'\right.\\').replace(r'&+x', r'&\left.+x')
+assert run('rainbow-groups', grouped, 'matchedalign', 'rainbow') == run('native-groups', grouped_native, native=True)
+scripts = r'F &= {\left(a^{\left[b\right]}\right)_{\left(c\right)}+\left(d\right)\prime}+\frac{\left(x\middle|y\right)}{\left(z\right)}'
+assert run('rainbow-group-scripts', scripts, 'matchedalign', 'rainbow') == run('native-group-scripts', scripts, native=True)
+# Color-stack resets must not detach scripts from top-level right delimiters.
+right_scripts = r'F &= \left|\frac{a}{b}\right|^{n/2}+\left(x\right)_i^j'
+assert run('rainbow-right-scripts', right_scripts, 'matchedalign', 'rainbow') == run('plain-right-scripts', right_scripts, 'matchedalign')
+assert run('native-right-scripts', right_scripts, native=True) == run('local-right-scripts', right_scripts, 'matchedalign', 'rainbow')
 print('All tagged MathML/PDF structure comparisons passed.')

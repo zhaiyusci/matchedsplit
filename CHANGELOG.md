@@ -4,6 +4,20 @@ Copyright (C) 2026 Yu Zhai. LPPL 1.3c or later.
 
 ## Unreleased
 
+- Keep the original measurement backend on all engines; LuaTeX physical
+  partition development now lives in a separate project.
+- Add niji as an alias for rainbow at package and environment scope.
+
+- Preserve native left/right spacing for pairs contained in one alignment
+  cell, including after operators such as lim and Tr.
+
+- Keep rainbow color resets inside top-level delimiter atoms so following
+  superscripts, subscripts and primes retain their attachment.
+
+- Color explicit left/middle/right pairs inside braced groups in rainbow
+  mode, preserving native math styles and script attachment. Ordinary
+  delimiters remain unchanged.
+
 - Add matchedalignat and matchedalignat*, with native column counts, spacing,
   numbering, local color options and independent overridealignat support.
 

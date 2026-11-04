@@ -8,7 +8,9 @@ try {
     $env:TEXMFCACHE = $env:TEXMFVAR
     New-Item -ItemType Directory -Path $env:TEXMFVAR -Force | Out-Null
     foreach ($engine in @('pdflatex', 'xelatex', 'lualatex')) {
-        foreach ($case in @('demo', 'nested_test', 'regression', 'assertions', 'default_split_test', 'override_test', 'override_tbtags_test', 'override_left_test', 'numbered_test', 'numbered_override_test', 'numbered_left_test', 'audit_features', 'rainbow_test', 'rainbow_local_test', 'rainbow_assertions', 'split_placement_test', 'matchedaligned_test', 'alignat_test', 'alignat_override_test', 'alignat_left_test')) {
+        foreach ($case in @('demo', 'nested_test', 'regression', 'assertions', 'default_split_test', 'override_test', 'override_tbtags_test', 'override_left_test', 'numbered_test', 'numbered_override_test', 'numbered_left_test', 'audit_features', 'rainbow_test', 'rainbow_local_test', 'rainbow_assertions', 'split_placement_test', 'matchedaligned_test', 'alignat_test', 'alignat_override_test', 'alignat_left_test', 'rainbow_groups_test', 'rainbow_groups_unicode_test', 'niji_test')) {
+            if ($engine -eq 'pdflatex' -and $case -eq 'rainbow_groups_unicode_test') { continue }
+            if ($engine -eq 'pdflatex' -and $case -eq 'demo' -and (Select-String demo.tex -Pattern 'unicode-math' -Quiet)) { continue }
             $job = "$engine-$case"
             $passes = if ($case -like 'numbered*' -or $case -like 'alignat*') { 2 } else { 1 }
             foreach ($pass in 1..$passes) {
@@ -55,6 +57,7 @@ try {
                 }
                 if (Select-String "build/$job.log" -Pattern 'undefined references|multiply defined|Overfull' -Quiet) { throw "$job reference or layout warning" }
             }
+            if ($case -like 'rainbow_groups*' -and -not (Select-String "build/$job.log" -Pattern 'RAINBOW GROUPS PASSED' -Quiet)) { throw "$job missing group assertions" }
             Write-Output "PASS $job"
         }
     }
